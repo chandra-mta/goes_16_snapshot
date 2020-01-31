@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 
 # Find Chandra flux from ACE or CRM(Kp) data
 
@@ -32,10 +32,10 @@ $crmnew_root = "$root_dir_CRM/CRM2_p.dat";
 $kpdat       = "$root_dir/ACE/kp.dat";
 $acedat      = "$root_dir/ACE/fluace.dat";
 $ephdat      = "$root_dir/ephem/gephem.dat";
-$sumdat      = "$root_dir_CRM/CRMsummary.dat";
-$arcdat      = "$root_dir_CRM/CRMarchive.dat";
-$g13dat      = "$root_dir/GOES/G13pchan_5m.txt";
-$g13edat     = "$root_dir/GOES/G13_part_5m.txt";
+$sumdat      = "$root_dir_CRM/CRMsummary_test.dat";
+$arcdat      = "$root_dir_CRM/CRMarchive_test.dat";
+$gprodat     = "$root_dir/GOES/proton_flux_channels.txt";
+$geprimedat     = "$root_dir/GOES/electron_flux_2_mev.txt";
 $g15dat      = "$root_dir/GOES/G15pchan_5m.txt";
 $IDL_file    = "$root_dir_CRM/CRM_plots.idl";
 $SIM_file    = "$root_dir_CRM/FPHIST-2001.dat";
@@ -67,20 +67,24 @@ if ($#gp == 16) { $g15p2 = $gp[7]*3.3; $g15p5 = $gp[10]*12 };
 
 # read the GOES-12 data
 
-open GF, $g13dat or print STDERR "$0: Cannot open $g13dat\n";
+open GF, $gprodat or print STDERR "$0: Cannot open $gprodat\n";
 @gp = <GF>;
-die "No GOES-13 data in $g13dat\n" unless (@gp);
+die "No GOES-primary data in $gprodat\n" unless (@gp);
 @gp = split ' ',$gp[-1];
 #$g13p2o = $gp[7];
 #if ($#gp == 16) { $g13p2 = $gp[7]*0.011; $g13p5 = $gp[10]*1.41696 };
-if ($#gp == 16) { $g13p2 = $gp[7]*3.3; $g13p5 = $gp[10]*12 };
+if ($#gp == 13) { $gprimaryp2 = $gp[5]*3.3; $gprimaryp5 = $gp[8]*12 };
+print $#gp;
+print $gp[5]."$_\n";
+print $gp[8]."$_\n";
 
-open GF, $g13edat or print STDERR "$0: Cannot open $g13edat\n";
+
+open GF, $geprimedat or print STDERR "$0: Cannot open $geprimedat\n";
 @gp = <GF>;
-die "No GOES-13 data in $g13edat\n" unless (@gp);
+die "No GOES-Primary data in $geprimedat\n" unless (@gp);
 @gp = split ' ',$gp[-1];
-$g13e2 = $gp[13];
-
+$gelectron2 = $gp[1];
+print $gelectron2."$_\n";
 # read the Chandra ephemeris data
 
 open EF, $ephdat or die "$0: Cannot open $ephdat\n";
@@ -191,9 +195,9 @@ $aflux *= 0.0 if ($si =~ /HRC/);
 $aflux *= 0.5 if ($otg =~ /LETG/);
 $aflux *= 0.2 if ($otg =~ /HETG/);
 
-$g13p2 = $sum[-10] unless ($g13p2);
+$gprimaryp2 = $sum[-10] unless ($gprimaryp2);
 $g15p2 = $sum[-11] unless ($g15p2);
-$g13p5 = $sum[-8] unless ($g13p5);
+$gprimaryp5 = $sum[-8] unless ($gprimaryp5);
 $g15p5 = $sum[-9] unless ($g15p5);
 $ostart = $sum[-7];
 $fluence = $sum[-2];
@@ -217,12 +221,12 @@ $txt  = "                    Currently scheduled FPSI, OTG : $si $otg\n";
 $txt .= "                                     Estimated Kp : $kp\n";
 $txt .= sprintf "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n",$ace;
 #$txt .= sprintf "                GOES-11 P2 flux (p/cm^2-s-sr-MeV) : %.2f\n",$g11p2o;
-#$txt .= sprintf "                GOES-13 P2 flux (p/cm^2-s-sr-MeV) : %.2f\n",$g13p2o;
-$txt .= sprintf "           GOES-13 P2 flux, in RADMON P4GM  units : %.2f\n",$g13p2;
-$txt .= sprintf "           GOES-15 P2 flux, in RADMON P4GM  units : %.2f\n",$g15p2;
-$txt .= sprintf "           GOES-13 P5 flux, in RADMON P41GM units : %.2f\n",$g13p5;
-$txt .= sprintf "           GOES-15 P5 flux, in RADMON P41GM units : %.2f\n",$g15p5;
-$txt .= sprintf "           GOES-13 E > 2.0 MeV flux (p/cm^2-s-sr) : %.1f\n",$g13e2;
+#$txt .= sprintf "                GOES-13 P2 flux (p/cm^2-s-sr-MeV) : %.2f\n",$gprimaryp2o;
+$txt .= sprintf "           GOES Primary P2 flux, in RADMON P4GM  units : %.2f\n",$gprimaryp2;
+#$txt .= sprintf "           GOES-15 P2 flux, in RADMON P4GM  units : %.2f\n",$g15p2;
+$txt .= sprintf "           GOES Primary P5 flux, in RADMON P41GM units : %.2f\n",$gprimaryp5;
+#$txt .= sprintf "           GOES-15 P5 flux, in RADMON P41GM units : %.2f\n",$g15p5;
+$txt .= sprintf "           GOES Primary E > 2.0 MeV flux (p/cm^2-s-sr) : %.1f\n",$gelectron2;
 $txt .= "                                 Orbit Start Time : $ostart\n";
 $txt .= "              Geocentric Distance (km), Orbit Leg : $alt $leg\n";
 $txt .= "                                       CRM Region : $region ($region[$region])\n";
