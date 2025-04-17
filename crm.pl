@@ -1,4 +1,4 @@
-#! /usr/bin/perl 
+#! /usr/bin/perl
 
 # Find Chandra flux from ACE or CRM(Kp) data
 
@@ -27,16 +27,18 @@ $RE_Float = qr/[+-]?(?:\d+[.]?\d*|[.]\d+)(?:[dDeE][+-]?\d+)?/;
 $root_dir = "/data/mta4/proj/rac/ops";
 $root_dir_CRM = dirname($0);	# Directory name of executable.  To be changed!
 
-$crmdat_root = "$root_dir_CRM/CRM_p.dat";
-$crmnew_root = "$root_dir_CRM/CRM2_p.dat";
+$crmdat_root = "$root_dir_CRM/CRM3_p.dat";
+$crmnew_root = "$root_dir_CRM/CRM3_p.dat";
 $kpdat       = "$root_dir/ACE/kp.dat";
 $acedat      = "$root_dir/ACE/fluace.dat";
 $ephdat      = "$root_dir/ephem/gephem.dat";
-$sumdat      = "$root_dir_CRM/CRMsummary_test.dat";
-$arcdat      = "$root_dir_CRM/CRMarchive_test.dat";
+$sumdat      = "$root_dir_CRM/CRMsummary.dat";
+$arcdat      = "$root_dir_CRM/CRMarchive.dat";
 $gprodat     = "$root_dir/GOES/proton_flux_channels.txt";
-$geprimedat     = "$root_dir/GOES/electron_flux_2_mev.txt";
-$g15dat      = "$root_dir/GOES/G15pchan_5m.txt";
+$geprimedat  = "$root_dir/GOES/electron_flux_2_mev.txt";
+#$g14dat      = "$root_dir/GOES/G13pchan_5m.txt"; 
+#$g14edat     = "$root_dir/GOES/G13_part_5m.txt";
+#$g15dat      = "$root_dir/GOES/G15pchan_5m.txt";
 $IDL_file    = "$root_dir_CRM/CRM_plots.idl";
 $SIM_file    = "$root_dir_CRM/FPHIST-2001.dat";
 $OTG_file    = "$root_dir_CRM/GRATHIST-2001.dat";
@@ -57,15 +59,34 @@ if ($size90 && $size90 == (-s $crmnew_root."87")) {
 
 # read the GOES-15 data
 
-open GF, $g15dat or print STDERR "$0: Cannot open $g15dat\n";
-@gp = <GF>;
-die "No GOES-15 data in $g15dat\n" unless (@gp);
-@gp = split ' ',$gp[-1];
+#open GF, $g15dat or print STDERR "$0: Cannot open $g15dat\n";
+#@gp = <GF>;
+#die "No GOES-15 data in $g15dat\n" unless (@gp);
+#@gp = split ' ',$gp[-1];
 #$g11p2o = $gp[7];
 #if ($#gp == 16) { $g11p2 = $gp[7]*0.011; $g11p5 = $gp[10]*1.41696 };
-if ($#gp == 16) { $g15p2 = $gp[7]*3.3; $g15p5 = $gp[10]*12 };
+#if ($#gp == 16) { $g15p2 = $gp[7]*3.3; $g15p5 = $gp[10]*12 };
 
-# read the GOES-12 data
+# read the GOES-14 data
+#open GF, $g14dat or print STDERR "$0: Cannot open $g14dat\n";
+#@gp = <GF>;
+#die "No GOES-14 data in $g14dat\n" unless (@gp);
+#@gp = split ' ',$gp[-1];
+#$g11p2o = $gp[7];
+#if ($#gp == 16) { $g11p2 = $gp[7]*0.011; $g11p5 = $gp[10]*1.41696 };
+#if ($#gp == 16) { $g14p2 = $gp[7]*3.3; $g14p5 = $gp[10]*12 };
+
+#edited 3/22/2020 for goes-14 deprecation
+#open GF, $g14edat or print STDERR "$0: Cannot open $g14edat\n";
+#@gp = <GF>;
+#die "No GOES-14 data in $g14edat\n" unless (@gp);
+#@gp = split ' ',$gp[-1];
+#$g14e2 = $gp[13];
+#print $gelectron2."$_\n";
+# read the Chandra ephemeris data
+
+
+# read the GOES-16 data
 
 open GF, $gprodat or print STDERR "$0: Cannot open $gprodat\n";
 @gp = <GF>;
@@ -77,7 +98,6 @@ if ($#gp == 13) { $gprimaryp4 = $gp[5]*3.3; $gprimaryp7 = $gp[8]*12 };
 #print $#gp;
 #print $gp[5]."$_\n";
 #print $gp[8]."$_\n";
-
 
 open GF, $geprimedat or print STDERR "$0: Cannot open $geprimedat\n";
 @gp = <GF>;
@@ -197,16 +217,14 @@ $aflux *= 0.2 if ($otg =~ /HETG/);
 
 # This whole section is dependent on position in summary file so need to update every time file changes
 $gprimaryp4 = $sum[-13] unless ($gprimaryp4);
-#$g15p2 = $sum[-11] unless ($g15p2); #bring back if secondary goes returns
 $gprimaryp7 = $sum[-12] unless ($gprimaryp7);
-#$g15p5 = $sum[-9] unless ($g15p5);
 $ostart = $sum[-10];
 $fluence = $sum[-5];
 $afluence = $sum[-4];
 
 # archive and re-initialize for a new orbit
 
-if ($leg eq "A" and $sum[-6] eq "D") {
+if ($leg eq "A" and $sum[-9] eq "D") {
     $oend = sprintf "%4.4d:%3.3d:%2.2d:%2.2d:%2.2d",$year,$yday,$hour,$min,$sec;
     open ARCF, ">>$arcdat" or die "Cannot open $arcdat\n";
     print ARCF "$ostart   $oend    $fluence    $afluence\n";
@@ -221,8 +239,8 @@ $afluence += ($aflux * $delt);
 $txt  = "                    Currently scheduled FPSI, OTG : $si $otg\n";
 $txt .= "                                     Estimated Kp : $kp\n";
 $txt .= sprintf "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n",$ace;
-$txt .= sprintf "            GOES-R P4 flux, in RADMON P4GM  units : %.2f\n",$gprimaryp4;
-$txt .= sprintf "            GOES-R P7 flux, in RADMON P41GM units : %.2f\n",$gprimaryp7;
+$txt .= sprintf "            GOES-R P4 flux, in RADMON P4GM  units : %.3f\n",$gprimaryp4;
+$txt .= sprintf "            GOES-R P7 flux, in RADMON P41GM units : %.3f\n",$gprimaryp7;
 $txt .= sprintf "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.1f\n",$gelectron2;
 $txt .= "                                 Orbit Start Time : $ostart\n";
 $txt .= "              Geocentric Distance (km), Orbit Leg : $alt $leg\n";
@@ -232,8 +250,8 @@ $txt .= sprintf "         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : %.4e\n",$af
 $txt .= sprintf "  External Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n",$fluence;
 $txt .= sprintf "Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n",$afluence;
 $txt .= sprintf "\n";
-$txt .= sprintf "Due to transition to GOES-R, what used to be P2 is now P4 and what used to be P5 is not P7\n";
-$txt .= sprintf "This message will dissappear in 01/31/2020\n";
+#$txt .= sprintf "Due to transition to GOES-16, what used to be P2 is now P4 and what used to be P5 is now P7\n";
+#$txt .= sprintf "This message will dissappear in 01/31/2021\n";
 
 open OF, ">$sumdat" or die "$0: Cannot open $sumdat\n";
 print OF $txt;
