@@ -249,7 +249,7 @@ $txt .= sprintf "           External Proton Flux (p/cm^2-s-sr-MeV) : %.4e\n",$fl
 $txt .= sprintf "         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : %.4e\n",$aflux;
 $txt .= sprintf "  External Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n",$fluence;
 $txt .= sprintf "Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n",$afluence;
-$txt .= sprintf "\n";
+#$txt .= sprintf "\n";
 #$txt .= sprintf "Due to transition to GOES-16, what used to be P2 is now P4 and what used to be P5 is now P7\n";
 #$txt .= sprintf "This message will dissappear in 01/31/2021\n";
 
